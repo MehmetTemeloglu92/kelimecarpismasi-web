@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kelime Çarpışması — Turkish Word Puzzle Game</title>
+  <meta name="description" content="Kelime Çarpışması — Turkish word guessing game with TDK dictionary. Play classic mode, online race and duel with real opponents.">
+  <meta name="theme-color" content="#0F1421">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%236366F1'/%3E%3Ctext x='50' y='68' font-family='Arial' font-size='60' font-weight='900' fill='white' text-anchor='middle'%3EKÇ%3C/text%3E%3C/svg%3E">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0F1421;
+      --surface: #1A2138;
+      --surface-alt: #252D47;
+      --primary: #6366F1;
+      --text: #FFFFFF;
+      --muted: #9CA3AF;
+      --correct: #22C55E;
+      --present: #EAB308;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface-alt);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .nav {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 18px;
+    }
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 900;
+    }
+    .nav-right {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      font-size: 14px;
+      flex-wrap: wrap;
+    }
+    .nav-links {
+      display: flex;
+      gap: 20px;
+    }
+    .nav-links a {
+      color: var(--muted);
+    }
+    .nav-links a:hover { color: var(--text); text-decoration: none; }
+
+    /* Language switcher */
+    .lang-switch {
+      display: inline-flex;
+      background: var(--surface-alt);
+      border-radius: 20px;
+      padding: 4px;
+      gap: 2px;
+    }
+    .lang-btn {
+      background: transparent;
+      color: var(--muted);
+      border: none;
+      padding: 6px 14px;
+      border-radius: 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .lang-btn.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    /* Language visibility - default show Turkish */
+    [data-lang="en"] { display: none; }
+    body.lang-en [data-lang="tr"] { display: none; }
+    body.lang-en [data-lang="en"] { display: block; }
+    body.lang-en span[data-lang="en"] { display: inline; }
+
+    .hero {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 80px 24px 60px;
+      text-align: center;
+    }
+    .hero-badge {
+      display: inline-block;
+      padding: 6px 14px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-size: 56px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      margin-bottom: 20px;
+      line-height: 1.1;
+    }
+    .hero h1 .accent { color: var(--primary); }
+    .hero-sub {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto 32px;
+    }
+    .download-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .btn-store {
+      background: var(--surface);
+      border: 1px solid var(--surface-alt);
+      color: var(--text);
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .btn-store:hover {
+      transform: translateY(-2px);
+      text-decoration: none;
+      border-color: var(--primary);
+    }
+    .btn-store span.small {
+      font-size: 10px;
+      color: var(--muted);
+      display: block;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+    .btn-store span.big {
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .coming-soon {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    section {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 60px 24px;
+    }
+    section h2 {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+    section .lead {
+      color: var(--muted);
+      font-size: 16px;
+      margin-bottom: 32px;
+      max-width: 700px;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      margin-top: 40px;
+    }
+    .feature {
+      background: var(--surface);
+      border: 1px solid var(--surface-alt);
+      border-radius: 16px;
+      padding: 24px;
+    }
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(99, 102, 241, 0.18);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 14px;
+    }
+    .feature h3 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .feature p {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .legal {
+      background: var(--surface);
+      margin-top: 40px;
+      padding: 40px 24px;
+      border-top: 1px solid var(--surface-alt);
+    }
+    .legal-inner {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .legal h2 {
+      font-size: 26px;
+      margin-bottom: 20px;
+      padding-top: 20px;
+    }
+    .legal h3 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-top: 24px;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .legal p, .legal li {
+      color: #C7CBD9;
+      font-size: 14.5px;
+      line-height: 1.7;
+    }
+    .legal p { margin-bottom: 12px; }
+    .legal ul {
+      margin: 8px 0 16px 20px;
+    }
+    .legal li { margin-bottom: 6px; }
+    .updated {
+      color: var(--muted);
+      font-size: 12px;
+      font-style: italic;
+    }
+
+    footer {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 40px 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      border-top: 1px solid var(--surface-alt);
+      margin-top: 40px;
+    }
+    footer a { color: var(--muted); margin: 0 12px; }
+    footer a:hover { color: var(--text); text-decoration: none; }
+
+    /* Mobile */
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 40px; }
+      .hero-sub { font-size: 16px; }
+      section h2 { font-size: 26px; }
+      .nav { padding: 12px 20px; }
+      .nav-links { font-size: 13px; gap: 14px; }
+      .nav-right { gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <nav class="nav">
+      <div class="brand">
+        <div class="brand-icon">KÇ</div>
+        <span>Kelime Çarpışması</span>
+      </div>
+      <div class="nav-right">
+        <div class="nav-links">
+          <a href="#ozellikler" data-lang="tr">Özellikler</a>
+          <a href="#features" data-lang="en">Features</a>
+          <a href="#gizlilik" data-lang="tr">Gizlilik</a>
+          <a href="#privacy" data-lang="en">Privacy</a>
+          <a href="#kullanim" data-lang="tr">Şartlar</a>
+          <a href="#terms" data-lang="en">Terms</a>
+          <a href="#iletisim" data-lang="tr">İletişim</a>
+          <a href="#contact" data-lang="en">Contact</a>
+        </div>
+        <div class="lang-switch">
+          <button class="lang-btn active" data-set-lang="tr">TR</button>
+          <button class="lang-btn" data-set-lang="en">EN</button>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <span class="hero-badge" data-lang="tr">TDK Güncel Türkçe Sözlük 12. Baskı</span>
+    <span class="hero-badge" data-lang="en">Powered by TDK Turkish Dictionary 12th Edition</span>
+    <h1>Kelime <span class="accent">Çarpışması</span></h1>
+    <p class="hero-sub" data-lang="tr">
+      Türkçe kelime tahmin oyunu. Klasik modda pratik yap, Online Yarış ve Düello'da rakiplerle yarış, Kelime derecelerini yükselt.
+    </p>
+    <p class="hero-sub" data-lang="en">
+      Turkish word guessing game. Practice in Classic mode, compete with real opponents in Online Race and Duel, level up your word ranks.
+    </p>
+    <div class="download-buttons">
+      <a href="#" class="btn-store coming-soon" aria-label="Google Play — Yakında">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3.6 20.5c-.3-.2-.6-.6-.6-1V4.5c0-.4.3-.8.6-1L13 12l-9.4 8.5z" fill="#34A853"/>
+          <path d="M17.4 15.7L14.4 12l3-3.7 3.6 2c1 .6 1 2.2 0 2.8l-3.6 2.6z" fill="#FBBC04"/>
+          <path d="M3.6 20.5L14.4 12l3 3.7L4.7 21c-.4.2-.8.2-1.1-.5z" fill="#EA4335"/>
+          <path d="M3.6 3.5c.3-.7.7-.7 1.1-.5L17.4 8.3l-3 3.7L3.6 3.5z" fill="#4285F4"/>
+        </svg>
+        <div>
+          <span class="small">GET IT ON</span>
+          <span class="big" data-lang="tr">Google Play — Yakında</span>
+          <span class="big" data-lang="en">Google Play — Coming Soon</span>
+        </div>
+      </a>
+      <a href="#" class="btn-store coming-soon" aria-label="App Store — Yakında">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+        </svg>
+        <div>
+          <span class="small">Download on the</span>
+          <span class="big" data-lang="tr">App Store — Yakında</span>
+          <span class="big" data-lang="en">App Store — Coming Soon</span>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- FEATURES: Turkish -->
+  <section id="ozellikler" data-lang="tr">
+    <h2>Özellikler</h2>
+    <p class="lead">
+      TDK sözlüğüyle desteklenmiş Türkçe kelime oyunu deneyimi. Üç farklı modda saatlerce eğlence.
+    </p>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">🎓</div>
+        <h3>Klasik Mod</h3>
+        <p>Tek başına oyna, 6 aşamalı kelime tahmin serüveninde Kelime derecelerini yükselt. Süre baskısı yok.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">⚡</div>
+        <h3>Online Yarış</h3>
+        <p>Rakibin için kelime seç, kendi kelimeni bul. Toplam puanı en yüksek olan maçı kazanır.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🎮</div>
+        <h3>Online Düello</h3>
+        <p>Rakibinle aynı kelimeyi sırayla tahmin edin. Önce bilen puanı kapar.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">👥</div>
+        <h3>Arkadaş Sistemi</h3>
+        <p>Arkadaşlarını ekle, direkt davet gönder, kendi maçlarını kur.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🏆</div>
+        <h3>Rütbeler & Sıralama</h3>
+        <p>Altın, Platin ve Elmas rütbeleri. Global sıralamada yerini gör.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📖</div>
+        <h3>19.000+ Kelime</h3>
+        <p>TDK Güncel Türkçe Sözlük 12. Baskı referans alındı. Zengin kelime havuzu.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES: English -->
+  <section id="features" data-lang="en">
+    <h2>Features</h2>
+    <p class="lead">
+      A Turkish word game experience powered by TDK dictionary. Hours of fun across three different modes.
+    </p>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">🎓</div>
+        <h3>Classic Mode</h3>
+        <p>Play solo, level up your word ranks through a 6-stage word guessing adventure. No time pressure.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">⚡</div>
+        <h3>Online Race</h3>
+        <p>Pick words for your opponent, guess your own. Player with the highest total score wins.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🎮</div>
+        <h3>Online Duel</h3>
+        <p>Take turns guessing the same word as your opponent. First to guess wins the points.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">👥</div>
+        <h3>Friend System</h3>
+        <p>Add friends, send direct invites, host your own matches.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🏆</div>
+        <h3>Ranks & Leaderboards</h3>
+        <p>Gold, Platinum and Diamond ranks. See your position on the global leaderboard.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📖</div>
+        <h3>19,000+ Words</h3>
+        <p>Powered by TDK Turkish Dictionary 12th Edition. Rich word pool.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="legal">
+    <div class="legal-inner">
+
+      <!-- PRIVACY: Turkish -->
+      <div data-lang="tr">
+        <h2 id="gizlilik">Gizlilik Politikası</h2>
+        <p class="updated">Son güncelleme: 1 Temmuz 2026</p>
+
+        <p>
+          Kelime Çarpışması ("Uygulama") olarak gizliliğinize saygı duyuyoruz. Bu politika, uygulamayı kullandığınızda hangi verilerin toplandığını, nasıl kullanıldığını ve haklarınızı açıklar.
+        </p>
+
+        <h3>1. Toplanan Bilgiler</h3>
+        <p>Uygulama aşağıdaki bilgileri toplar:</p>
+        <ul>
+          <li><strong>Hesap bilgileri:</strong> Google veya Apple hesabınızla giriş yaparsanız, servis sağlayıcıdan aldığımız kullanıcı kimliği (uid), e-posta adresi, görünen ad ve profil fotoğrafı URL'i.</li>
+          <li><strong>Oyun verileri:</strong> Seçtiğiniz takma ad, kazanılan/kaybedilen maçlar, puanlar, rütbe bilgileri, oyun tercihleri.</li>
+          <li><strong>Sosyal veriler:</strong> Arkadaş listeniz, arkadaşlık davetleri, oyun davetleri.</li>
+          <li><strong>Cihaz bilgileri:</strong> Cihaz tipi, işletim sistemi versiyonu, uygulama versiyonu, dil ayarı.</li>
+          <li><strong>Reklam verileri:</strong> Reklam kimliği (Advertising ID), reklam gösterim/tıklama istatistikleri (Google AdMob aracılığıyla).</li>
+          <li><strong>Satın alma verileri:</strong> Reklamsız sürüm satın aldığınızda, satın alma doğrulama bilgisi (kredi kartı bilgisi asla toplanmaz — bu Google Play veya Apple tarafından işlenir).</li>
+        </ul>
+
+        <h3>2. Bilgiler Nasıl Kullanılır?</h3>
+        <ul>
+          <li>Oyun mekaniğini işletmek (maç oluşturmak, sonuçları kaydetmek).</li>
+          <li>Sıralama ve rütbe sistemini güncel tutmak.</li>
+          <li>Arkadaş sistemi ve oyun davetleri gibi sosyal özellikleri sağlamak.</li>
+          <li>Kişiselleştirilmiş veya genel reklamlar göstermek (kullanıcı izniyle).</li>
+          <li>Uygulama performansını izlemek ve hataları düzeltmek.</li>
+          <li>Kötüye kullanımı tespit etmek ve önlemek.</li>
+        </ul>
+
+        <h3>3. Üçüncü Taraf Servisler</h3>
+        <p>Uygulama şu üçüncü taraf servislerini kullanır:</p>
+        <ul>
+          <li><strong>Firebase (Google):</strong> Kimlik doğrulama, veritabanı, sunucusuz fonksiyonlar. <a href="https://firebase.google.com/support/privacy" target="_blank">Gizlilik Politikası</a></li>
+          <li><strong>Google AdMob:</strong> Reklam gösterimi. <a href="https://policies.google.com/privacy" target="_blank">Gizlilik Politikası</a></li>
+          <li><strong>Google Play Billing / Apple App Store:</strong> Uygulama içi satın alımlar.</li>
+        </ul>
+
+        <h3>4. Reklam ve İzin (GDPR/UMP)</h3>
+        <p>
+          Avrupa Birliği ve benzer düzenlemeler kapsamındaki kullanıcılar için ilk açılışta reklam izin (consent) diyaloğu gösterilir. Kişiselleştirilmiş reklamlara izin vermezseniz, size sadece bağlam tabanlı (kişisel olmayan) reklamlar gösterilir.
+        </p>
+        <p>
+          iOS 14.5+ cihazlarda App Tracking Transparency (ATT) izin talebi görüntülenir. İzin vermezseniz, üçüncü taraflara reklam takibi verisi paylaşılmaz.
+        </p>
+
+        <h3>5. Verilerin Saklanması</h3>
+        <p>
+          Bilgileriniz Google Firebase altyapısında (europe-west3 bölgesinde) güvenli bir şekilde saklanır. Verileriniz, aktif hesabınız olduğu sürece saklanır. Hesabınızı silmek isterseniz bize e-posta göndererek talep edebilirsiniz — talebiniz üzerine 30 gün içinde tüm verileriniz silinir.
+        </p>
+
+        <h3>6. Çocukların Gizliliği</h3>
+        <p>
+          Uygulama 13 yaşın altındaki çocuklara yönelik değildir. Bilerek 13 yaşın altındaki kullanıcılardan veri toplanmaz. Böyle bir durum tespit edilirse veri hemen silinir.
+        </p>
+
+        <h3>7. Haklarınız (KVKK / GDPR)</h3>
+        <p>Yasal haklarınız:</p>
+        <ul>
+          <li>Verilerinize erişim talep etme</li>
+          <li>Verilerin düzeltilmesini isteme</li>
+          <li>Verilerin silinmesini talep etme (unutulma hakkı)</li>
+          <li>Veri işlemeye itiraz etme</li>
+          <li>Verilerinizi taşınabilir formatta alma</li>
+        </ul>
+        <p>
+          Bu haklarınızı kullanmak için aşağıdaki iletişim bilgileri üzerinden bize ulaşabilirsiniz.
+        </p>
+
+        <h3>8. Güvenlik</h3>
+        <p>
+          Verileriniz endüstri standardı güvenlik önlemleriyle (HTTPS/TLS, Firebase güvenlik kuralları, kimlik doğrulama) korunur. Ancak internet üzerindeki hiçbir sistem %100 güvenli değildir.
+        </p>
+
+        <h3>9. Politika Değişiklikleri</h3>
+        <p>
+          Bu gizlilik politikası zaman zaman güncellenebilir. Önemli değişiklikler olduğunda uygulama içi bildirim yapılabilir. Politikayı düzenli olarak kontrol etmenizi öneririz.
+        </p>
+      </div>
+
+      <!-- PRIVACY: English -->
+      <div data-lang="en">
+        <h2 id="privacy">Privacy Policy</h2>
+        <p class="updated">Last updated: July 1, 2026</p>
+
+        <p>
+          At Kelime Çarpışması ("the App"), we respect your privacy. This policy explains what data is collected when you use the app, how it is used, and your rights.
+        </p>
+
+        <h3>1. Information We Collect</h3>
+        <p>The app collects the following information:</p>
+        <ul>
+          <li><strong>Account information:</strong> If you sign in with your Google or Apple account, we receive your user ID (uid), email address, display name, and profile photo URL from the provider.</li>
+          <li><strong>Game data:</strong> Your chosen nickname, wins/losses, points, rank information, game preferences.</li>
+          <li><strong>Social data:</strong> Your friend list, friend requests, game invites.</li>
+          <li><strong>Device information:</strong> Device type, operating system version, app version, language preference.</li>
+          <li><strong>Advertising data:</strong> Advertising ID, ad impression/click statistics (via Google AdMob).</li>
+          <li><strong>Purchase data:</strong> When you purchase the ad-free version, purchase verification information (credit card details are never collected — these are processed by Google Play or Apple).</li>
+        </ul>
+
+        <h3>2. How Information Is Used</h3>
+        <ul>
+          <li>To operate game mechanics (create matches, save results).</li>
+          <li>To keep leaderboards and rank systems up to date.</li>
+          <li>To provide social features such as friend system and game invites.</li>
+          <li>To show personalized or non-personalized ads (with user consent).</li>
+          <li>To monitor app performance and fix bugs.</li>
+          <li>To detect and prevent abuse.</li>
+        </ul>
+
+        <h3>3. Third-Party Services</h3>
+        <p>The app uses the following third-party services:</p>
+        <ul>
+          <li><strong>Firebase (Google):</strong> Authentication, database, serverless functions. <a href="https://firebase.google.com/support/privacy" target="_blank">Privacy Policy</a></li>
+          <li><strong>Google AdMob:</strong> Ad display. <a href="https://policies.google.com/privacy" target="_blank">Privacy Policy</a></li>
+          <li><strong>Google Play Billing / Apple App Store:</strong> In-app purchases.</li>
+        </ul>
+
+        <h3>4. Ads and Consent (GDPR/UMP)</h3>
+        <p>
+          For users in the European Union and similar jurisdictions, an ad consent dialog is shown on first launch. If you do not consent to personalized ads, only context-based (non-personalized) ads will be shown.
+        </p>
+        <p>
+          On iOS 14.5+ devices, an App Tracking Transparency (ATT) permission request is displayed. If you deny, no ad tracking data is shared with third parties.
+        </p>
+
+        <h3>5. Data Storage</h3>
+        <p>
+          Your data is stored securely on Google Firebase infrastructure (europe-west3 region). Data is retained as long as your account is active. If you wish to delete your account, you may request it via email — all your data will be deleted within 30 days of your request.
+        </p>
+
+        <h3>6. Children's Privacy</h3>
+        <p>
+          The app is not directed at children under 13. We do not knowingly collect data from users under 13. If such a case is detected, the data will be deleted immediately.
+        </p>
+
+        <h3>7. Your Rights (GDPR / KVKK)</h3>
+        <p>Your legal rights:</p>
+        <ul>
+          <li>Request access to your data</li>
+          <li>Request correction of data</li>
+          <li>Request deletion of data (right to be forgotten)</li>
+          <li>Object to data processing</li>
+          <li>Receive your data in a portable format</li>
+        </ul>
+        <p>
+          To exercise these rights, please contact us via the contact information below.
+        </p>
+
+        <h3>8. Security</h3>
+        <p>
+          Your data is protected with industry-standard security measures (HTTPS/TLS, Firebase security rules, authentication). However, no system on the internet is 100% secure.
+        </p>
+
+        <h3>9. Policy Changes</h3>
+        <p>
+          This privacy policy may be updated from time to time. Important changes may be notified within the app. We recommend checking the policy regularly.
+        </p>
+      </div>
+
+      <hr style="border: none; border-top: 1px solid var(--surface-alt); margin: 40px 0;">
+
+      <!-- TERMS: Turkish -->
+      <div data-lang="tr">
+        <h2 id="kullanim">Kullanım Şartları</h2>
+        <p class="updated">Son güncelleme: 1 Temmuz 2026</p>
+
+        <p>
+          Kelime Çarpışması uygulamasını kullanarak aşağıdaki şartları kabul etmiş olursunuz.
+        </p>
+
+        <h3>1. Hizmet Tanımı</h3>
+        <p>
+          Kelime Çarpışması, kullanıcıların Türkçe kelime tahmin oyunları oynayabileceği, arkadaşlarıyla yarışabileceği bir mobil uygulamadır. Uygulama, TDK Güncel Türkçe Sözlük 12. Baskı'yı referans alır.
+        </p>
+
+        <h3>2. Hesap Oluşturma ve Sorumluluk</h3>
+        <ul>
+          <li>Uygulama Google, Apple veya misafir olarak kullanılabilir.</li>
+          <li>Hesap bilgilerinizin güvenliğinden siz sorumlusunuz.</li>
+          <li>Başkasının hesabını izinsiz kullanmayınız.</li>
+          <li>Sahte hesap oluşturmak yasaktır.</li>
+        </ul>
+
+        <h3>3. Yasaklı Davranışlar</h3>
+        <p>Uygulama içinde aşağıdaki davranışlar yasaktır:</p>
+        <ul>
+          <li>Uygun olmayan (küfür, hakaret, cinsel içerik) takma ad kullanmak.</li>
+          <li>Otomatik/bot yazılım kullanarak hile yapmak.</li>
+          <li>Diğer kullanıcıları taciz veya rahatsız etmek.</li>
+          <li>Uygulamanın güvenlik önlemlerini aşmaya çalışmak.</li>
+          <li>Reklam engelleyici veya benzer yöntemlerle sistemi manipüle etmek.</li>
+          <li>Ticari amaçlarla uygulamayı izinsiz kullanmak.</li>
+        </ul>
+
+        <h3>4. Uygulama İçi Satın Alımlar</h3>
+        <p>
+          "Reklamsız Sürüm" gibi uygulama içi satın alımlar Google Play Billing veya Apple App Store aracılığıyla yapılır. Satın alımlar için iade politikaları ilgili platformun kurallarına tabidir.
+        </p>
+
+        <h3>5. Reklamlar</h3>
+        <p>
+          Ücretsiz sürümde uygulama içi reklamlar gösterilir. Reklamlar Google AdMob aracılığıyla sunulur. Reklamları görmek istemiyorsanız "Reklamsız Sürüm"ü satın alabilirsiniz.
+        </p>
+
+        <h3>6. Fikri Mülkiyet</h3>
+        <p>
+          Uygulama, logolar, tasarım, kod ve içerik Kelime Çarpışması'na aittir. Kullanıcılar yalnızca kişisel kullanım hakkına sahiptir. TDK sözlüğü içeriği Türk Dil Kurumu'na aittir; uygulama sadece referans amaçlı kullanır.
+        </p>
+
+        <h3>7. Hesap Kapatma</h3>
+        <p>
+          Bu şartları ihlal eden hesaplar önceden bildirim yapılmaksızın askıya alınabilir veya kapatılabilir. Kullanıcılar da diledikleri zaman hesaplarını silme talebinde bulunabilir.
+        </p>
+
+        <h3>8. Sorumluluk Reddi</h3>
+        <p>
+          Uygulama "olduğu gibi" sunulur. Kesintisiz veya hatasız çalışacağı garanti edilmez. Uygulama kullanımından doğan doğrudan veya dolaylı zararlardan sorumluluk kabul edilmez.
+        </p>
+
+        <h3>9. Değişiklikler</h3>
+        <p>
+          Bu şartlar zaman zaman güncellenebilir. Değişiklik durumunda kullanıcılara bildirim yapılabilir. Uygulamayı kullanmaya devam etmek, güncel şartları kabul ettiğiniz anlamına gelir.
+        </p>
+
+        <h3>10. Uygulanacak Hukuk</h3>
+        <p>
+          Bu şartlar Türkiye Cumhuriyeti yasalarına tabidir. Doğabilecek uyuşmazlıklarda İzmir mahkemeleri yetkilidir.
+        </p>
+      </div>
+
+      <!-- TERMS: English -->
+      <div data-lang="en">
+        <h2 id="terms">Terms of Service</h2>
+        <p class="updated">Last updated: July 1, 2026</p>
+
+        <p>
+          By using the Kelime Çarpışması app, you agree to the following terms.
+        </p>
+
+        <h3>1. Service Description</h3>
+        <p>
+          Kelime Çarpışması is a mobile application that allows users to play Turkish word guessing games and compete with friends. The app references the TDK Turkish Dictionary 12th Edition.
+        </p>
+
+        <h3>2. Account Creation and Responsibility</h3>
+        <ul>
+          <li>The app can be used with Google, Apple, or as a guest.</li>
+          <li>You are responsible for the security of your account information.</li>
+          <li>Do not use someone else's account without permission.</li>
+          <li>Creating fake accounts is prohibited.</li>
+        </ul>
+
+        <h3>3. Prohibited Behavior</h3>
+        <p>The following behaviors are prohibited within the app:</p>
+        <ul>
+          <li>Using inappropriate (profane, insulting, sexual) nicknames.</li>
+          <li>Cheating using automated/bot software.</li>
+          <li>Harassing or disturbing other users.</li>
+          <li>Attempting to bypass the app's security measures.</li>
+          <li>Manipulating the system with ad blockers or similar methods.</li>
+          <li>Unauthorized commercial use of the app.</li>
+        </ul>
+
+        <h3>4. In-App Purchases</h3>
+        <p>
+          In-app purchases such as the "Ad-Free Version" are processed through Google Play Billing or Apple App Store. Refund policies for purchases are subject to the rules of the respective platform.
+        </p>
+
+        <h3>5. Ads</h3>
+        <p>
+          Ads are shown in the free version of the app. Ads are served via Google AdMob. If you do not wish to see ads, you can purchase the "Ad-Free Version".
+        </p>
+
+        <h3>6. Intellectual Property</h3>
+        <p>
+          The app, logos, design, code, and content belong to Kelime Çarpışması. Users only have the right to personal use. The TDK dictionary content belongs to the Turkish Language Association; the app uses it only for reference.
+        </p>
+
+        <h3>7. Account Termination</h3>
+        <p>
+          Accounts that violate these terms may be suspended or terminated without prior notice. Users may also request account deletion at any time.
+        </p>
+
+        <h3>8. Disclaimer</h3>
+        <p>
+          The app is provided "as is". No guarantee is made that it will operate uninterrupted or error-free. No responsibility is accepted for direct or indirect damages arising from the use of the app.
+        </p>
+
+        <h3>9. Changes</h3>
+        <p>
+          These terms may be updated from time to time. Users may be notified of changes. Continued use of the app means you accept the current terms.
+        </p>
+
+        <h3>10. Governing Law</h3>
+        <p>
+          These terms are governed by the laws of the Republic of Türkiye. Any disputes shall be resolved in the courts of Izmir.
+        </p>
+      </div>
+
+      <hr style="border: none; border-top: 1px solid var(--surface-alt); margin: 40px 0;">
+
+      <!-- CONTACT: Turkish -->
+      <div data-lang="tr">
+        <h2 id="iletisim">İletişim</h2>
+        <p>
+          Sorularınız, geri bildirimleriniz, veri talepleriniz veya destek talepleriniz için aşağıdaki adresten bize ulaşabilirsiniz:
+        </p>
+        <p style="font-size: 16px; margin-top: 16px;">
+          📧 <a href="mailto:mehmettemeloglu@gmail.com">mehmettemeloglu@gmail.com</a>
+        </p>
+        <p style="color: var(--muted); font-size: 13px; margin-top: 16px;">
+          Genellikle 2-3 iş günü içinde yanıt veriyoruz.
+        </p>
+      </div>
+
+      <!-- CONTACT: English -->
+      <div data-lang="en">
+        <h2 id="contact">Contact</h2>
+        <p>
+          For questions, feedback, data requests, or support requests, please reach out to us at:
+        </p>
+        <p style="font-size: 16px; margin-top: 16px;">
+          📧 <a href="mailto:mehmettemeloglu@gmail.com">mehmettemeloglu@gmail.com</a>
+        </p>
+        <p style="color: var(--muted); font-size: 13px; margin-top: 16px;">
+          We usually respond within 2-3 business days.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    <p data-lang="tr">
+      <a href="#gizlilik">Gizlilik Politikası</a> ·
+      <a href="#kullanim">Kullanım Şartları</a> ·
+      <a href="#iletisim">İletişim</a>
+    </p>
+    <p data-lang="en">
+      <a href="#privacy">Privacy Policy</a> ·
+      <a href="#terms">Terms of Service</a> ·
+      <a href="#contact">Contact</a>
+    </p>
+    <p style="margin-top: 12px;">
+      © 2026 Kelime Çarpışması. <span data-lang="tr">Tüm hakları saklıdır.</span><span data-lang="en">All rights reserved.</span>
+    </p>
+    <p style="margin-top: 8px; font-size: 11px;">
+      <span data-lang="tr">TDK Güncel Türkçe Sözlük 12. Baskı referans alınmıştır.</span>
+      <span data-lang="en">Powered by TDK Turkish Dictionary 12th Edition.</span>
+    </p>
+  </footer>
+
+  <script>
+    (function() {
+      const buttons = document.querySelectorAll('[data-set-lang]');
+      const body = document.body;
+      const html = document.documentElement;
+
+      function setLang(lang) {
+        if (lang === 'en') {
+          body.classList.add('lang-en');
+          html.lang = 'en';
+        } else {
+          body.classList.remove('lang-en');
+          html.lang = 'tr';
+        }
+        buttons.forEach(b => {
+          b.classList.toggle('active', b.dataset.setLang === lang);
+        });
+        try { localStorage.setItem('kc.lang', lang); } catch(e) {}
+      }
+
+      // İlk açılışta: localStorage → yoksa tarayıcı dili → yoksa TR
+      let initial = 'tr';
+      try {
+        const saved = localStorage.getItem('kc.lang');
+        if (saved === 'en' || saved === 'tr') {
+          initial = saved;
+        } else if (navigator.language && navigator.language.toLowerCase().startsWith('en')) {
+          initial = 'en';
+        }
+      } catch(e) {}
+      setLang(initial);
+
+      buttons.forEach(b => {
+        b.addEventListener('click', () => setLang(b.dataset.setLang));
+      });
+    })();
+  </script>
+
+</body>
+</html>
